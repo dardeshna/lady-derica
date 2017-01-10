@@ -9,14 +9,19 @@ import com.palyrobotics.frc2016.subsystems.controllers.team254.DriveFinishLineCo
 import com.palyrobotics.frc2016.subsystems.controllers.team254.DrivePathController;
 import com.palyrobotics.frc2016.subsystems.controllers.team254.DriveStraightController;
 import com.palyrobotics.frc2016.subsystems.controllers.team254.TurnInPlaceController;
+import com.palyrobotics.frc2016.util.TalonEncoder;
 import com.team254.lib.trajectory.Path;
-import com.team254.lib.util.*;
+import com.team254.lib.util.DriveSignal;
+import com.team254.lib.util.Loop;
+import com.team254.lib.util.Pose;
+import com.team254.lib.util.StateHolder;
+import com.team254.lib.util.Subsystem;
 
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.CANTalon;
+import edu.wpi.first.wpilibj.CANTalon.TalonControlMode;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
-//import com.team254.lib.util.gyro.GyroThread;
-import edu.wpi.first.wpilibj.Encoder;
 
 public class Drive extends Subsystem implements Loop {
 
@@ -29,10 +34,16 @@ public class Drive extends Subsystem implements Loop {
 
 	}
 	private DoubleSolenoid m_shifter_solenoid = null;
-	private CheesySpeedController m_left_motor;
-	private CheesySpeedController m_right_motor;
-	protected Encoder m_left_encoder;
-	protected Encoder m_right_encoder;
+	private CANTalon m_left_back_motor;
+	private CANTalon m_left_front_motor;
+	private CANTalon m_right_back_motor;
+	private CANTalon m_right_front_motor;
+	
+	private CANTalon m_left_motor;
+	private CANTalon m_right_motor;
+	
+	protected TalonEncoder m_left_encoder;
+	protected TalonEncoder m_right_encoder;
 	protected ADXRS450_Gyro m_gyro;
 	private DriveController m_controller = null;
 	
@@ -47,9 +58,8 @@ public class Drive extends Subsystem implements Loop {
 	protected final double m_turn_slip_factor; // Measure empirically
 	private Pose m_cached_pose = new Pose(0, 0, 0, 0, 0, 0); // Don't allocate poses at 200Hz!
 
-	public Drive(String name, CheesySpeedController left_drive,
-			CheesySpeedController right_drive, Encoder left_encoder,
-			Encoder right_encoder, ADXRS450_Gyro gyro, DoubleSolenoid shifter_solenoid) {
+	public Drive(String name, CANTalon leftBackMotor, CANTalon leftFrontMotor, CANTalon rightBackMotor, CANTalon rightFrontMotor, TalonEncoder left_encoder,
+			TalonEncoder right_encoder, ADXRS450_Gyro gyro, DoubleSolenoid shifter_solenoid) {
 		super(name);
 		if(Robot.name == RobotName.TYR) {
 			m_wheelbase_width = 26.0;
@@ -64,19 +74,36 @@ public class Drive extends Subsystem implements Loop {
 			m_inches_per_tick = 0.07033622;
 			mGear = DriveGear.HIGH;
 		}
-		this.m_left_motor = left_drive;
-		this.m_right_motor = right_drive;
+		
+		this.m_left_back_motor = leftBackMotor;
+		this.m_left_front_motor = leftFrontMotor;
+		this.m_right_back_motor = rightBackMotor;
+		this.m_right_front_motor = rightFrontMotor;
+		
+		m_left_front_motor.changeControlMode(TalonControlMode.Follower);
+		m_left_front_motor.set(Constants.kDericaLeftDriveBackMotorDeviceID);
+		m_right_front_motor.changeControlMode(TalonControlMode.Follower);
+		m_right_front_motor.set(Constants.kDericaRightDriveBackMotorDeviceID);
+		
+		this.m_left_motor = m_left_back_motor;
+		this.m_right_motor = m_right_back_motor;
+		
 		this.m_left_encoder = left_encoder;
 		this.m_right_encoder = right_encoder;
 		this.m_left_encoder.setDistancePerPulse(m_inches_per_tick);
 		this.m_right_encoder.setDistancePerPulse(m_inches_per_tick);
 		this.m_gyro = gyro;
 		this.m_shifter_solenoid = shifter_solenoid;
+
 	}
 
 	public void setOpenLoop(DriveSignal signal) {
 		m_controller = null;
 		setDriveOutputs(signal);
+		System.out.println("Left Distance: " + m_left_encoder.getDistance());
+		System.out.println("Right Distance: " + m_right_encoder.getDistance());
+
+
 	}
 	
 	public void setGear(DriveGear targetGear) {

@@ -1,11 +1,24 @@
 package com.palyrobotics.frc2016;
 
 import com.palyrobotics.frc2016.Robot.RobotName;
-import com.palyrobotics.frc2016.subsystems.*;
+import com.palyrobotics.frc2016.subsystems.Breacher;
+import com.palyrobotics.frc2016.subsystems.DericaShooter;
+import com.palyrobotics.frc2016.subsystems.Drive;
+import com.palyrobotics.frc2016.subsystems.Intake;
+import com.palyrobotics.frc2016.subsystems.LowGoalShooter;
+import com.palyrobotics.frc2016.subsystems.TyrShooter;
+import com.palyrobotics.frc2016.util.TalonEncoder;
 import com.palyrobotics.frc2016.util.XboxController;
 import com.team254.lib.util.CheesySpeedController;
 
-import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.AnalogPotentiometer;
+import edu.wpi.first.wpilibj.CANTalon;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
+import edu.wpi.first.wpilibj.Victor;
+import edu.wpi.first.wpilibj.VictorSP;
 
 public class HardwareAdaptor {
 	/* 
@@ -13,55 +26,32 @@ public class HardwareAdaptor {
 	 */
 	public static Drive kDrive = null;
 
-	static CheesySpeedController kLeftDriveMotor = null;
-	static CheesySpeedController kRightDriveMotor = null;
-	static Encoder kLeftDriveEncoder = null;
-	static Encoder kRightDriveEncoder = null;
+	static CANTalon kLeftDriveBackMotor  = null;
+	static CANTalon kLeftDriveFrontMotor  = null;
+	static CANTalon kRightDriveBackMotor  = null;
+	static CANTalon kRightDriveFrontMotor  = null;
+
+	static TalonEncoder kLeftDriveEncoder = null;
+	static TalonEncoder kRightDriveEncoder = null;
 	static ADXRS450_Gyro kGyro;
 	static DoubleSolenoid kShifterSolenoid = null;
 
 	// Instantiate drive motors
 	static {
-		if(Robot.name == RobotName.TYR) {
-			kLeftDriveMotor = new CheesySpeedController(
-					new SpeedController[]{new CANTalon(Constants.kTyrLeftDriveFrontMotorDeviceID), 
-							new CANTalon(Constants.kTyrLeftDriveBackMotorDeviceID)},
-					new int[]{Constants.kTyrLeftDriveFrontMotorPDP, Constants.kTyrLeftDriveBackMotorPDP});
-			kRightDriveMotor = new CheesySpeedController(
-					new SpeedController[]{new CANTalon(Constants.kTyrRightDriveFrontMotorDeviceID), 
-							new CANTalon(Constants.kTyrRightDriveBackMotorDeviceID)}, 
-					new int[]{Constants.kTyrRightDriveBackMotorPDP, Constants.kTyrRightDriveBackMotorPDP});
-			kLeftDriveEncoder = new Encoder(
-					Constants.kTyrLeftDriveEncoderDIOA, Constants.kTyrLeftDriveEncoderDIOB);
-			kRightDriveEncoder = new Encoder(
-					Constants.kTyrRightDriveEncoderDIOA, Constants.kTyrRightDriveEncoderDIOB);
-			kGyro = new ADXRS450_Gyro();
-			kShifterSolenoid = new DoubleSolenoid(
-					Constants.kTyrDriveSolenoidExtend, Constants.kTyrDriveSolenoidRetract);
-		}
-		else if (Robot.name == RobotName.DERICA) {
-			CANTalon leftDriveBackMotor = new CANTalon(Constants.kDericaLeftDriveBackMotorDeviceID);
-			leftDriveBackMotor.enableBrakeMode(true);
-			CANTalon leftDriveFrontMotor = new CANTalon(Constants.kDericaLeftDriveFrontMotorDeviceID);
-			leftDriveFrontMotor.enableBrakeMode(true);
-			CANTalon rightDriveBackMotor = new CANTalon(Constants.kDericaRightDriveBackMotorDeviceID);
-			rightDriveBackMotor.enableBrakeMode(true);
-			CANTalon rightDriveFrontMotor = new CANTalon(Constants.kDericaRightDriveFrontMotorDeviceID);
-			rightDriveFrontMotor.enableBrakeMode(true);
-			kLeftDriveMotor = new CheesySpeedController(
-					new SpeedController[]{leftDriveFrontMotor, leftDriveBackMotor},
-					new int[]{Constants.kDericaLeftDriveFrontMotorPDP, Constants.kDericaLeftDriveBackMotorPDP});
-			kRightDriveMotor = new CheesySpeedController(
-					new SpeedController[]{rightDriveFrontMotor, rightDriveBackMotor}, 
-					new int[]{Constants.kDericaRightDriveBackMotorPDP, Constants.kDericaRightDriveBackMotorPDP});
-			kLeftDriveEncoder = new Encoder(
-					Constants.kDericaLeftDriveEncoderDIOA, Constants.kDericaLeftDriveEncoderDIOB, true);
-			kRightDriveEncoder = new Encoder(
-					Constants.kDericaRightDriveEncoderDIOA, Constants.kDericaRightDriveEncoderDIOB);
-			kGyro = new ADXRS450_Gyro();
-			// no shifter solenoid
-		}
-		kDrive = new Drive("drive", kLeftDriveMotor, kRightDriveMotor, kLeftDriveEncoder, kRightDriveEncoder, kGyro, kShifterSolenoid);
+		kLeftDriveBackMotor = new CANTalon(Constants.kDericaLeftDriveBackMotorDeviceID);
+		kLeftDriveBackMotor.enableBrakeMode(true);
+		kLeftDriveFrontMotor = new CANTalon(Constants.kDericaLeftDriveFrontMotorDeviceID);
+		kLeftDriveFrontMotor.enableBrakeMode(true);
+		kRightDriveBackMotor = new CANTalon(Constants.kDericaRightDriveBackMotorDeviceID);
+		kRightDriveBackMotor.enableBrakeMode(true);
+		kRightDriveFrontMotor = new CANTalon(Constants.kDericaRightDriveFrontMotorDeviceID);
+		kRightDriveFrontMotor.enableBrakeMode(true);
+		
+		kLeftDriveEncoder = new TalonEncoder(kLeftDriveBackMotor);
+		kRightDriveEncoder = new TalonEncoder(kRightDriveBackMotor);
+
+			
+		kDrive = new Drive("drive", kLeftDriveBackMotor, kLeftDriveFrontMotor, kRightDriveBackMotor, kRightDriveFrontMotor, kLeftDriveEncoder, kRightDriveEncoder, kGyro, kShifterSolenoid);
 	}
 
 	/*
